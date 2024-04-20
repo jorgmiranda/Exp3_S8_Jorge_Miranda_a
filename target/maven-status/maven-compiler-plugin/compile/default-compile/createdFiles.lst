@@ -1,0 +1,15 @@
+com\sumativa\a\usuario\service\UsuarioServiceImpl.class
+com\sumativa\a\usuario\repository\UsuarioRepository.class
+com\sumativa\a\usuario\service\RolService.class
+com\sumativa\a\usuario\model\Usuario.class
+com\sumativa\a\usuario\controller\RolController.class
+com\sumativa\a\usuario\model\Rol.class
+com\sumativa\a\usuario\model\RolDTO.class
+com\sumativa\a\usuario\repository\RolRepository.class
+com\sumativa\a\usuario\controller\RolController$ErrorResponse.class
+com\sumativa\a\usuario\controller\UsuarioController$ErrorResponse.class
+com\sumativa\a\usuario\controller\UsuarioController$LoginControl.class
+com\sumativa\a\usuario\service\RolServiceImpl.class
+com\sumativa\a\usuario\UsuarioApplication.class
+com\sumativa\a\usuario\controller\UsuarioController.class
+com\sumativa\a\usuario\service\UsuarioService.class
