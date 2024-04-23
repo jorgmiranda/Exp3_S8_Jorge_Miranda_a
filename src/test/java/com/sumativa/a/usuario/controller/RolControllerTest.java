@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.sumativa.a.usuario.model.Rol;
 import com.sumativa.a.usuario.service.RolServiceImpl;
+import com.sumativa.a.usuario.service.UsuarioService;
 
 @WebMvcTest(RolController.class)
 public class RolControllerTest {
@@ -25,6 +26,9 @@ public class RolControllerTest {
 
     @MockBean
     private RolServiceImpl rolServiceImpl;
+
+    @MockBean
+    private UsuarioService usuarioService;
 
     @Test
     public void getAllRoles() throws Exception{
