@@ -3,8 +3,12 @@ package com.sumativa.a.usuario.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,37 +42,50 @@ public class RolController{
     private UsuarioService usuarioService;
 
     @GetMapping
-    public List<Rol> getAllRoles() {
-        return rolService.getAllRoles();
+    public CollectionModel<EntityModel<Rol>> getAllRoles() {
+        List<Rol> roles = rolService.getAllRoles();
+
+        List<EntityModel<Rol>> rolResources = roles.stream()
+                .map(rol -> EntityModel.of(rol,
+                    WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getRolByID(rol.getId())).withSelfRel()
+                    ))
+                .collect(Collectors.toList());
+        WebMvcLinkBuilder linkTo = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAllRoles());
+        CollectionModel<EntityModel<Rol>> resourses = CollectionModel.of(rolResources, linkTo.withRel("roles"));
+
+        return resourses;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getRolByID(@PathVariable Long id) {
+    public EntityModel<Rol> getRolByID(@PathVariable Long id) {
         Optional<Rol> rol = rolService.getRolById(id);
-        if(rol.isEmpty()){
-            log.error("No se encontro ningun Rol con ese ID {} ", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontro ningun rol con ese ID"));
+        if(rol.isPresent()){
+            return EntityModel.of(rol.get(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getRolByID(id)).withSelfRel(),
+                WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAllRoles()).withRel("all-roles"));
+        }else{
+            throw new NotFoundException("No se encontro ningun Rol con este id: " + id);
         }
-        return ResponseEntity.ok(rol);
+        
     }
 
     @PostMapping
-    public ResponseEntity<Object> crearRol(@RequestBody RolDTO rol){
+    public EntityModel<Rol> crearRol(@RequestBody RolDTO rol){
         //Se valida si el id esta vacio:
         if(rol.getIdUsuario() == null){
             log.error("El ID Usuario esta vacio");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Debe ingresar el ID usurio antes de crear un rol"));
+            throw new BadRequestException("Debe ingresar el ID usurio antes de crear un rol ");
         }
         //Se busca obtener el usuario si se proporciona un id
         Optional<Usuario> buscarUsuario = usuarioService.getUsuarioById(rol.getIdUsuario());
         if(buscarUsuario.isEmpty()){
             log.error("No se encontro un Usuario con el ID {}", rol.getIdUsuario());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontro ningun Usuario con ese ID"));
+            throw new NotFoundException("No se encontro ningun Usuario con ese ID ");
            
         }
-        if(rol.getNombreRol() == null){
+        if(rol.getNombreRol() == null || rol.getNombreRol().isEmpty()){
             log.error("No se pueden definir un rol sin nombre");
-                return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponse("El rol debe tener un nombre"));
+            throw new BadRequestException("El rol debe tener un nombre");
         }
         
         Rol rolcreado = new Rol();
@@ -79,35 +96,37 @@ public class RolController{
         Rol r = rolService.crearRol(rolcreado);
         if(r == null){
             log.error("Error al crear el rol");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Error al crear el rol"));
+            throw new BadRequestException("Error al crear el rol");
         }
-        return ResponseEntity.ok(r);
+        return EntityModel.of(r,
+        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getRolByID(r.getId())).withSelfRel(),
+        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAllRoles()).withRel("all-roles"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> actualizarRol(@PathVariable Long id, @RequestBody RolDTO rol){
+    public EntityModel<Rol> actualizarRol(@PathVariable Long id, @RequestBody RolDTO rol){
         //Se valida si el idUsuario esta vacio:
         if(rol.getIdUsuario() == null){
             log.error("El ID Usuario esta vacio");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Debe ingresar el ID usurio antes de crear un rol"));
+            throw new BadRequestException("Debe ingresar el ID usurio antes de crear un rol");
         }
 
         //Se busca obtener el usuario si se proporciona un id
         Optional<Usuario> buscarUsuario = usuarioService.getUsuarioById(rol.getIdUsuario());
         if(buscarUsuario.isEmpty()){
             log.error("No se encontro un Usuario con el ID {}", rol.getIdUsuario());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontro ningun Usuario con ese ID"));
+            throw new BadRequestException("No se encontro ningun Usuario con ese ID");
            
         }
 
         Optional<Rol> rolbuscado = rolService.getRolById(id);
         if(rolbuscado.isEmpty()){
             log.error("No se encontro ningun rol con ese ID {} ", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("No se encontro ningun rol con ese ID"));
+            throw new BadRequestException("No se encontro ningun rol con ese ID");
         }
         if(rol.getNombreRol() == null){
             log.error("No se pueden definir un rol sin nombre", id);
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponse("El rol debe tener un nombre"));
+            throw new BadRequestException("El rol debe tener un nombre");
         }
 
         Rol r = new Rol();
@@ -116,7 +135,9 @@ public class RolController{
         r.setUsuario(buscarUsuario.get());
                 
         Rol retorno = rolService.actualizarRol(id, r);
-        return ResponseEntity.ok(retorno);
+        return EntityModel.of(retorno,
+        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getRolByID(id)).withSelfRel(),
+        WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).getAllRoles()).withRel("all-roles"));
     }
 
     @DeleteMapping("/{id}")
