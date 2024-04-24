@@ -201,7 +201,7 @@ public class UsuarioController {
         Optional<Usuario> usrBuscado = usuarioService.getUsuarioById(id);
         if(usrBuscado.isEmpty()){
             log.error("No se encontro ningun Usuario con ese ID {} ", id);
-            throw new BadRequestException("No se encontro ningun Usuario con ese ID");
+            throw new NotFoundException("No se encontro ningun Usuario con ese ID");
         }
         if(usr.getNombreCompleto() == null || usr.getNombreCompleto().isEmpty()){
             log.error("El nombre del usuario es obligatorio." );
