@@ -1,3 +1,5 @@
+com\sumativa\a\usuario\controller\BadRequestException.class
+com\sumativa\a\usuario\controller\NotFoundException.class
 com\sumativa\a\usuario\service\UsuarioServiceImpl.class
 com\sumativa\a\usuario\repository\UsuarioRepository.class
 com\sumativa\a\usuario\service\RolService.class
